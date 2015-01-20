@@ -1,0 +1,32 @@
+#!/bin/bash
+
+source globals
+
+DIR=$0.dir
+mkdir -p $DIR
+
+for sample in $SAMPLES
+do
+	echo $sample
+	# template Bacteria100_S55_L001_R1_001.fastq
+	r1=data/${SAMPLE_PREFIX}${sample}${SAMPLE_MIDFIX}1$SAMPLE_POSTFIX
+	r2=data/${SAMPLE_PREFIX}${sample}${SAMPLE_MIDFIX}2$SAMPLE_POSTFIX
+
+	outdir=$DIR/$sample.min_overlap_$J
+	echo minimum overlap $J
+	join_paired_ends.py --pe_join_method $M --min_overlap $J --forward_reads_fp $r1 --reverse_reads_fp $r2 --output_dir $outdir 
+
+	# output files: fastqjoin.join.fastq fastqjoin.un1.fastq  fastqjoin.un2.fastq
+
+	paired_fq=$outdir/fastqjoin.join.fastq
+	echo count of paired reads in $paired_fq
+	./count_reads $paired_fq
+
+	unpaired_1_fq=$outdir/fastqjoin.un1.fastq
+	echo count of unpaired reads from forward in $unpaired_1_fq
+	./count_reads $unpaired_1_fq
+
+	unpaired_2_fq=$outdir/fastqjoin.un2.fastq
+	echo count of unpaired reads from reverse in $unpaired_2_fq
+	./count_reads $unpaired_2_fq
+done

@@ -1,0 +1,11 @@
+#!/bin/bash
+
+if [ "$#" -ne 1 ]
+then
+	echo "usage: count_reads <fastq file>"
+	exit 1
+fi
+
+file=$1
+
+grep "^@M02529" $file | wc -l

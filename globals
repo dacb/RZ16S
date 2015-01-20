@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# global variables for RZ16S 2015
+SAMPLES="Bacteria10_S10 Bacteria11_S11 Bacteria12_S12 Bacteria133_S64 Bacteria138_S67 Bacteria1_S1 Bacteria2_S2 Bacteria3_S3 Bacteria4_S4 Bacteria5_S5 Bacteria6_S6 Bacteria73_S37 Bacteria74_S38 Bacteria75_S39 Bacteria76_S40 Bacteria77_S41 Bacteria78_S42 Bacteria79_S43 Bacteria7_S7 Bacteria80_S44 Bacteria81_S45 Bacteria8_S8 Bacteria9_S9"
+SAMPLE_PREFIX="Linkoeping-A-"
+SAMPLE_MIDFIX="_L001_R"
+SAMPLE_POSTFIX="_001.fastq"
+
+# fastq-join options
+# method
+M=fastq-join
+# overlap length
+J=100
+
+# split_libraries_fastq
+# filtering quality
+Q=19
+
+

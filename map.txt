@@ -1,0 +1,4 @@
+#SampleID	BarcodeSequence	LinkerPrimerSequence	Index7ID	Index7Sequence	Index5ID	indexI5Sequence	ReversePrimerSequence	Scientist	Template	Primerset	RyanBacteria	RyanArchaea	RyanStudy	RyanSample	RyanReactor	RyanDate	RyanPurification	Description
+#INSERT DATE																		
+#/k/raw/miseq_microbio/2014-03-17_MartinMortensen_Linkoeping_BacteriaAndArche																		
+Linkoeping.A.Bacteria91	AGAGGTTGGCTCTGCT	GTGCCAGCMGCCGCGGTAA	AR6	AGAGGTTG	AF6	GCTCTGCT	GGACTACHVGGGTWTCTAAT	Ryan	DNA	Uni341F.Uni806R	YES	NO	FedBatch	FB.9.30	FB.D	09_30	PCR	Linkoeping.A.Plate.1.F6.Linkoeping.A.Bacteria91
