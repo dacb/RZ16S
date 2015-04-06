@@ -1,0 +1,29 @@
+#!/bin/bash
+
+source globals
+
+DIR=$0.dir
+mkdir -p $DIR
+
+input_arg=""
+sample_arg=""
+first=1
+
+for sample in $SAMPLES
+do
+	paired_fq=1.join_paired_ends.dir/$sample.min_overlap_$J/fastqjoin.join.fastq
+	if [ $first -eq 1 ]
+	then
+		input_arg="$paired_fq"
+		first=0
+	else
+		input_arg="$input_arg $paired_fq"
+	fi
+done
+
+echo cating files 
+
+mkdir 1.5.quality.filtering
+cat $input_arg > 1.5.quality.filtering/cat.all.joined.bacteria.seqs.fastq
+
+

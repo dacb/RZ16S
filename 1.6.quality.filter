@@ -1,0 +1,23 @@
+#!/bin/bash
+
+source globals
+DIR=$0.dir
+mkdir -p $DIR
+
+if [ ! -e $0.stats.log ]
+then
+        $USEARCH -fastq_stats 1.5.quality.filtering/cat.all.joined.bacteria.seqs.fastq -log $0.stats.log
+fi
+
+# look at stats file
+
+echo based on stats.log using $TRUNCLEN and $MAXEE for trunclen and maxee respectively
+
+for sample in $SAMPLES
+do
+	echo $sample
+	paired_fq=1.join_paired_ends.dir/$sample.min_overlap_$J/fastqjoin.join.fastq
+
+	$USEARCH -fastq_filter $paired_fq -fastq_maxee $MAXEE -fastq_trunclen $TRUNCLEN -fastqout $DIR/$sample.fastq
+
+done

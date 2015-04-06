@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # global variables for RZ16S 2015
-SAMPLES="Bacteria10_S10 Bacteria11_S11 Bacteria12_S12 Bacteria133_S64 Bacteria138_S67 Bacteria1_S1 Bacteria2_S2 Bacteria3_S3 Bacteria4_S4 Bacteria5_S5 Bacteria6_S6 Bacteria73_S37 Bacteria74_S38 Bacteria75_S39 Bacteria76_S40 Bacteria77_S41 Bacteria78_S42 Bacteria79_S43 Bacteria7_S7 Bacteria80_S44 Bacteria81_S45 Bacteria8_S8 Bacteria9_S9"
+SAMPLES="Bacteria49_S25 Bacteria50_S26 Bacteria51_S27 Bacteria52_S28 Bacteria53_S29 Bacteria54_S30 Bacteria55_S31 Bacteria56_S32 Bacteria57_S33 Bacteria58_S34 Bacteria59_S35 Bacteria60_S36 Bacteria73_S37 Bacteria74_S38 Bacteria75_S39 Bacteria76_S40 Bacteria77_S41 Bacteria78_S42 Bacteria79_S43 Bacteria80_S44 Bacteria81_S45"
 SAMPLE_PREFIX="Linkoeping-A-"
 SAMPLE_MIDFIX="_L001_R"
 SAMPLE_POSTFIX="_001.fastq"
@@ -12,8 +12,14 @@ M=fastq-join
 # overlap length
 J=100
 
+#USEARCH quality filtering
+USEARCH="/macqiime/QIIME/bin/usearch61"
+RDPPATH="/rdp_classifier_2.10.1/dist/classifier.jar" 
+TRUNCLEN=298
+MAXEE=.5
+
 # split_libraries_fastq
 # filtering quality
-Q=19
+Q=20
 
 
