@@ -1,0 +1,28 @@
+#!/bin/bash
+
+SQL=$0.read_sums.sql
+XLS=$0.read_sums.xls
+
+AB=otu_table_non_chimeric_rdp.tab
+
+otu_table=master_otu_table
+
+cat << EOF > $SQL
+.mode tabs
+SELECT ot.OTUId
+EOF
+
+head -2 $AB | tail -1 | awk -F'\t' -v frac_cutoff=$FRAC_CUTOFF '{ for (i = 2; i <= NF; ++i) { printf("\t\t, SUM(%s) AS %s\n", $i, $i); } }' >> $SQL
+
+cat << EOF >> $SQL
+	FROM $otu_table AS ot
+	WHERE domain <> "Archaea"
+;
+EOF
+
+sqlite3 -header database.sqlite3 < $SQL > $XLS
+
+#awk -f $0.reshape.awk -v expt="H1" 44.master_otu_table.no_Archaea.0.01.xls > $0.persistent_otus.reshaped.tab
+#awk -f $0.reshape.awk -v expt="L1" 44.master_otu_table.no_Archaea.0.01.xls >> $0.persistent_otus.reshaped.tab
+
+R --no-save < $0.R

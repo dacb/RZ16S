@@ -1,0 +1,22 @@
+#!/bin/bash
+
+SQL=$0.sql
+XLS=4.4.master_otu_table.no_Archaea.summary.genus.xls
+
+AB=otu_table_non_chimeric_rdp.tab
+
+cat << EOF > $SQL
+.mode tabs
+SELECT genus
+EOF
+head -2 $AB | tail -1 | awk -F'\t' '{ for (i = 2; i <= NF; ++i) { printf("\t\t\t\t, SUM(%s) AS %s\n", $i, $i); } }' >> $SQL
+
+cat << EOF >> $SQL
+	FROM master_otu_table
+	WHERE
+			domain <> "Archaea"
+	GROUP BY genus
+;		
+EOF
+
+sqlite3 -header database.sqlite3 < $SQL | sed "s/denovo/OTU_/g" > $XLS

@@ -1,0 +1,141 @@
+#!/bin/bash
+
+BIOM=3.QIIME_analysis/USEARCH_picked_otus/otu_table_non_chimeric.biom
+AB=otu_table_non_chimeric_rdp.tab
+ABTMP=$AB.tmp
+FA=3.QIIME_analysis/USEARCH_picked_otus/seqs_chimeras_filtered_otus_rep_set.fna
+FATMP=$FA.tmp
+RDP=seqs_chimeras_filtered_otus_rep_set.RDP_classifier.xls
+RDPFLAT=$RDP.flat
+XLS=otu_table.xls
+DB=database.sqlite3
+
+source globals 
+
+SQL=$0.sql
+
+if [ ! -e $AB ]
+then
+	echo converting biom to tab
+	biom convert -i $BIOM -o $AB -b
+fi
+awk '{ if (line >= 2) print $0; ++line; }' $AB > $ABTMP
+
+if [ ! -e $RDP ]
+then
+	echo running RDP classifier
+
+	java -Xmx1g -jar $RDPPATH classify -q $FA -o $RDP	
+
+	echo flattening $RDP for loading to the database
+	awk -F'\t' '{ gsub(/"/, "", $0); otu = $1; rank = 0; for (i = 3; i <= NF; i += 3) { rank++; printf("%s\t%d\t%s\t%s\t%s\n", otu, rank, $i, $(i + 1), $(i + 2)); } }' $RDP > $RDPFLAT
+fi
+
+echo flatting $FA for loading to the database
+awk -f fa2tab.awk $FA > $FATMP
+
+echo using the one ring to bind them all, muahahah
+
+cat << EOF > $SQL
+.mode tabs
+
+-- load abundances from $AB
+DROP TABLE otu_table;
+CREATE TABLE otu_table (
+
+EOF
+
+
+head -2 $AB | tail -1 | awk -F'\t' '{ printf("\tOTUId VARCHAR(32) PRIMARY KEY NOT NULL,\n"); for (i = 2; i <= NF; ++i) { printf("\t%s INTEGER%s\n", $i, (i == NF ? "" : ", ")); } }' >> $SQL
+
+cat << EOF >> $SQL
+);
+.import $ABTMP otu_table
+
+-- load the tax hierarchy from $RDP
+DROP TABLE class_table;
+CREATE TABLE class_table (
+	OTUId	VARCHAR(32) NOT NULL,
+	rank_no	INTEGER NOT NULL,
+	name	VARCHAR(32) NOT NULL,
+	rank	VARCHAR(32) NOT NULL,
+	confidence FLOAT NOT NULL
+);
+.import $RDPFLAT class_table
+
+-- load the sequences from $FA
+DROP TABLE IF EXISTS sequences;
+CREATE TABLE sequences ( locus VARCHAR(32) PRIMARY KEY, description VARCHAR(256), sequence LONGTEXT );
+.import $FATMP sequences
+
+-- create flattened class table
+DROP TABLE IF EXISTS class_flat;
+CREATE TABLE class_flat
+AS SELECT otus.OTUId, 
+-- the following 7 lines are how this statement should be, but a bug in sqlite3
+-- causes the AS named fields to return empty results
+--		d.name AS domain, d.confidence AS domain_confidence, 
+--		p.name AS phylum, p.confidence AS phylum_confidence, 
+--		c.name AS class, c.confidence AS class_confidence, 
+--		o.name AS order_, o.confidence AS order_confidence, 
+--		f.name AS family, f.confidence AS family_confidence, 
+--		g.name AS genus, g.confidence AS genus_confidence, 
+--		s.name AS species, s.confidence AS species_confidence
+		d.name, d.confidence, 
+		p.name, p.confidence, 
+		c.name, c.confidence, 
+		o.name, o.confidence, 
+		f.name, f.confidence, 
+		g.name, g.confidence, 
+		s.name, s.confidence
+	FROM (SELECT DISTINCT OTUId FROM class_table) AS otus
+		LEFT JOIN class_table AS d ON otus.OTUId = d.OTUId AND d.rank = "domain"
+		LEFT JOIN class_table AS p ON otus.OTUId = p.OTUId AND p.rank = "phylum"
+		LEFT JOIN class_table AS c ON otus.OTUId = c.OTUId AND c.rank = "class"
+		LEFT JOIN class_table AS o ON otus.OTUId = o.OTUId AND o.rank = "order"
+		LEFT JOIN class_table AS f ON otus.OTUId = f.OTUId AND f.rank = "family"
+		LEFT JOIN class_table AS g ON otus.OTUId = g.OTUId AND g.rank = "genus"
+		LEFT JOIN class_table AS s ON otus.OTUId = s.OTUId AND s.rank = "species"
+;
+
+-- uber join
+DROP VIEW master_otu_table;
+CREATE VIEW master_otu_table AS 
+SELECT ot.OTUId,
+EOF
+
+head -2 $AB | tail -1 | awk -F'\t' '{ for (i = 2; i <= NF; ++i) { printf("\t\t%s ,\n", $i); } }' >> $SQL
+
+cat << EOF >> $SQL
+-- the following 2 lines are how this statement should be, but a bug in sqlite3
+-- cases the above commented out 7 lines to return empty result sets so we have to use the crappy names
+--		domain, domain_confidence, phylum, phylum_confidence, class, class_confidence,
+--			order_, order_confidence, family, family_confidence, genus, genus_confidence, species, species_confidence,
+		name AS domain, confidence AS domain_confidence,
+		"name:1" AS phylum, "confidence:1" AS phylum_confidence,
+		"name:2" AS class , "confidence:2" AS class_confidence,
+		"name:3" AS order_, "confidence:3" AS order_confidence,
+		"name:4" AS family, "confidence:4" AS family_confidence,
+		"name:5" AS genus, "confidence:5" AS genus_confidence,
+		"name:6" AS species, "confidence:6" AS species_confidence,
+		sequence
+	FROM otu_table AS ot
+		INNER JOIN class_flat AS cf ON ot.OTUId = cf.OTUId
+		INNER JOIN sequences AS st ON ot.OTUId = st.locus
+	ORDER BY ( 0
+EOF
+
+head -2 $AB | tail -1 | awk -F'\t' '{ for (i = 2; i <= NF; ++i) { printf("\t\t\t+ %s\n", $i); } }' >> $SQL
+
+cat << EOF >> $SQL
+		) DESC
+;
+
+SELECT * FROM master_otu_table;
+EOF
+
+sqlite3 -header -separator $'\t' $DB < $SQL > $XLS
+
+exit
+
+\rm -rf $ABTMP $FATMP

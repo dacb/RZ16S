@@ -1,0 +1,15 @@
+#!/bin/bash
+
+SQL=$0.sql
+XLS=4.1.otu_table.no_Archaea.xls
+
+cat << EOF > $SQL
+.mode tabs
+SELECT * 
+	FROM master_otu_table
+	WHERE
+			domain <> "Archaea"
+;		
+EOF
+
+sqlite3 -header database.sqlite3 < $SQL > $XLS
